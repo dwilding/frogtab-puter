@@ -1,2 +1,1 @@
-# frogtab-standalone
-A self-hostable version of frogtab.com
+In early development...

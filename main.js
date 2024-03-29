@@ -1,9 +1,9 @@
 async function storeIcons() {
   const fetched = await Promise.all([
-    fetch("/favicons/icon-16.png"),
-    fetch("/favicons/icon-32.png"),
-    fetch("/favicons/icon-16-notify.png"),
-    fetch("/favicons/icon-32-notify.png")
+    fetch("favicons/icon-16.png"),
+    fetch("favicons/icon-32.png"),
+    fetch("favicons/icon-16-notify.png"),
+    fetch("favicons/icon-32-notify.png")
   ]);
   const getObjectURL = async i => {
     const blob = await fetched[i].blob();

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="system">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Capture tasks without revealing your inbox">
+    <title>Send to Frogtab</title>
+    <link rel="icon" href="favicons/icon-16.png" sizes="16x16" type="image/png">
+    <link rel="icon" href="favicons/icon-32.png" sizes="32x32" type="image/png">
+    <link rel="apple-touch-icon" sizes="180x180" href="favicons/icon-180-apple.png">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="stylesheet" href="style.css?sha1=f7b3e85916bd60de3022658696e22a5a1c70a139">
+  </head>
+  <body>
+    <div class="container restricted">
+      <div class="interface">
+        <div class="main">
+          <textarea id="editor" class="display" placeholder="Send to your inbox…"></textarea>
+        </div>
+        <div class="actions">
+          <div class="action primary">
+            <span id="send" class="circle-button" title="Send"><svg width="24px" height="24px" viewBox="0 0 24 24" stroke-width="1.5" fill="none" xmlns="http://www.w3.org/2000/svg" color="currentColor"><path d="M22 12L3 20l3.563-8L3 4l19 8zM6.5 12H22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>
+      function delayForUX(f) {
+        return Promise.all([
+          f(),
+          new Promise(resolve => window.setTimeout(resolve, 1500))
+        ]);
+      }
+      function tryToSendLocal() {
+        const valueToSend = dom.editor.value.trim();
+        if (valueToSend == "") {
+          return;
+        }
+        dom.editor.value = "";
+        dom.editor.focus();
+        dom.send.classList.add("long-hover");
+        window.setTimeout(() => {
+          dom.send.classList.remove("enabled");
+          dom.send.classList.remove("long-hover");
+        }, 300);
+        if (localStorage.getItem("value.inbox") === null) {
+          localStorage.setItem("value.inbox", "");
+        }
+        let valueInbox = localStorage.getItem("value.inbox").trimStart();
+        if (valueInbox != "") {
+          valueInbox = `\n\n${valueInbox}`;
+        }
+        valueInbox = `${valueToSend}${valueInbox}`;
+        localStorage.setItem("value.inbox", valueInbox);
+      }
+      function setSendLocal() {
+        document.body.addEventListener("keydown", event => {
+          if ((event.ctrlKey || event.metaKey) && !event.shiftKey && event.key.toLowerCase() == "enter") {
+            event.preventDefault();
+            tryToSendLocal();
+          }
+        });
+        dom.send.addEventListener("click", event => {
+          tryToSendLocal();
+        });
+        dom.editor.addEventListener("input", event => {
+          const value = dom.editor.value.trim();
+          if (value != "") {
+            dom.send.classList.add("enabled");
+            dom.send.classList.remove("short-hover");
+          }
+          else {
+            dom.send.classList.remove("enabled");
+          }
+        });
+      }
+      async function startApp() {
+        setSendLocal();
+        dom.send.addEventListener("mouseenter", event => {
+          dom.send.classList.add("short-hover");
+        });
+        dom.send.addEventListener("mouseleave", event => {
+          dom.send.classList.remove("short-hover");
+        });
+        window.addEventListener("storage", event => {
+          document.documentElement.setAttribute("data-theme", localStorage.getItem("ui.theme"));
+        });
+      }
+
+      // ******** Initial setup ********
+      if (localStorage.getItem("ui.theme") === null) {
+        localStorage.setItem("ui.theme", "system");
+      }
+      document.documentElement.setAttribute("data-theme", localStorage.getItem("ui.theme"));
+      const dom = {
+        editor: document.getElementById("editor"),
+        send: document.getElementById("send")
+      };
+      startApp();
+    </script>
+  </body>
+</html>

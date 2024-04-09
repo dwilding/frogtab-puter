@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="system">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Set up tasks that you usually do on the same day each week">
+    <title>Weekly Routine - Frogtab</title>
+    <link rel="icon" href="favicons/icon-16.png" sizes="16x16" type="image/png">
+    <link rel="icon" href="favicons/icon-32.png" sizes="32x32" type="image/png">
+    <link rel="apple-touch-icon" sizes="180x180" href="favicons/icon-180-apple.png">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <div class="container restricted">
+      <div class="interface">
+        <div class="tabs">
+          <div class="tab">
+            <span id="tab-mon" class="tab-name selected">Mon</span>
+            <span id="tab-tue" class="tab-name">Tue</span>
+            <span id="tab-wed" class="tab-name">Wed</span>
+            <span id="tab-thu" class="tab-name">Thu</span>
+            <span id="tab-fri" class="tab-name">Fri</span>
+            <span id="tab-sat" class="tab-name">Sat</span>
+            <span id="tab-sun" class="tab-name">Sun</span>
+          </div>
+        </div>
+        <div class="main">
+          <textarea id="editor-mon" class="display" placeholder="What do you usually do on Mondays?"></textarea>
+          <textarea id="editor-tue" placeholder="What do you usually do on Tuesdays?"></textarea>
+          <textarea id="editor-wed" placeholder="What do you usually do on Wednesdays?"></textarea>
+          <textarea id="editor-thu" placeholder="What do you usually do on Thursdays?"></textarea>
+          <textarea id="editor-fri" placeholder="What do you usually do on Fridays?"></textarea>
+          <textarea id="editor-sat" placeholder="What do you usually do on Saturdays?"></textarea>
+          <textarea id="editor-sun" placeholder="What do you usually do on Sundays?"></textarea>
+        </div>
+      </div>
+    </div>
+    <script>
+      function switchToTab(tab) {
+        if (tab != selectedTab) {
+          dom[tab].classList.add("selected");
+          dom[selectedTab].classList.remove("selected");
+          dom.editor[tab].classList.add("display");
+          dom.editor[selectedTab].classList.remove("display");
+          selectedTab = tab;
+        }
+        refreshView();
+      }
+      function refreshView() {
+        if (dom.editor[selectedTab].value != localStorage.getItem(`routine.${selectedTab}`)) {
+          dom.editor[selectedTab].value = localStorage.getItem(`routine.${selectedTab}`);
+          dom.editor[selectedTab].scrollTop = 0;
+          dom.editor[selectedTab].setSelectionRange(0, 0);
+        }
+      }
+      function startApp() {
+        const weekdayToday = (new Date()).getDay();
+        switchToTab(weekdayKeys[weekdayToday]);
+        for (const key of weekdayKeys) {
+          dom.editor[key].addEventListener("input", event => {
+            localStorage.setItem(`routine.${key}`, dom.editor[key].value);
+          });
+          dom[key].addEventListener("click", event => {
+            switchToTab(key);
+          });
+        }
+        window.addEventListener("storage", event => {
+          document.documentElement.setAttribute("data-theme", localStorage.getItem("ui.theme"));
+          refreshView();
+        });
+      }
+
+      // ******** Initial setup ********
+      if (localStorage.getItem("ui.theme") === null) {
+        localStorage.setItem("ui.theme", "system");
+      }
+      document.documentElement.setAttribute("data-theme", localStorage.getItem("ui.theme"));
+      const dom = {
+        editor: {}
+      };
+      const weekdayKeys = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+      for (const key of weekdayKeys) {
+        if (localStorage.getItem(`routine.${key}`) === null) {
+          localStorage.setItem(`routine.${key}`, "");
+        }
+        dom.editor[key] = document.getElementById(`editor-${key}`);
+        dom[key] = document.getElementById(`tab-${key}`);
+      }
+      let selectedTab = "mon";
+      startApp();
+    </script>
+  </body>
+</html>

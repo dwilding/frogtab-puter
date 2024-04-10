@@ -18,8 +18,12 @@
       <h1>Settings</h1>
     </header>
     <main>
-      <h2>This Device</h2>
       <ul>
+        <li>
+          <p>
+            <strong>Puter</strong> &mdash; <span id="puter-status">Checking…</span>
+          </p>
+        </li>
         <li>
           <p>
             <strong>Theme</strong> &mdash; TODO
@@ -30,16 +34,55 @@
             <strong>Tab Icon</strong> &mdash; TODO
           </p>
         </li>
-      </ul>
-      <h2>All Devices</h2>
-      <ul>
         <li>
           <p>
             <strong>Restore Data</strong> &mdash; TODO
           </p>
         </li>
       </ul>
+    </main>
+    <script src="https://js.puter.com/v2/"></script>
     <script>
+      async function startApp() {
+        if (puter.auth.isSignedIn()) {
+          const user = await puter.auth.getUser();
+          dom.puterStatus.innerHTML = "";
+          dom.puterStatus.appendChild(document.createTextNode("You have logged in to Puter as "));
+          const codeUsername = document.createElement("code");
+          codeUsername.textContent = user.username;
+          dom.puterStatus.appendChild(codeUsername);
+          const aLogout = document.createElement("a");
+          aLogout.textContent = "Log out";
+          aLogout.href = "#";
+          aLogout.addEventListener("click", event => {
+            event.preventDefault();
+            puter.auth.signOut();
+            window.location.reload();
+          });
+          dom.puterStatus.appendChild(document.createTextNode(". "));
+          dom.puterStatus.appendChild(aLogout);
+          // TODO: Add an "all devices" badge to the Restore Data setting
+        }
+        else {
+          dom.puterStatus.textContent = "You have not logged in to Puter. To log in, reload Frogtab.";
+        }
+        window.addEventListener("storage", event => {
+          if (!puter.auth.isSignedIn() && localStorage.getItem("puter.auth.token") !== null) {
+            window.location.reload();
+          }
+          document.documentElement.setAttribute("data-theme", localStorage.getItem("ui.theme"));
+        });
+      }
+
+      // ******** Initial setup ********
+      if (localStorage.getItem("ui.theme") === null) {
+        localStorage.setItem("ui.theme", "system");
+      }
+      document.documentElement.setAttribute("data-theme", localStorage.getItem("ui.theme"));
+      const dom = {
+        puterStatus: document.getElementById("puter-status")
+      };
+      startApp();
     </script>
   </body>
 </html>

@@ -583,10 +583,15 @@ async function saveToFile() {
   const dataBlob = new Blob([dataJSON], {
     type: "application/json; charset=utf-8"
   });
-  await puter.fs.write("Frogtab_sync.json", dataBlob);
-  lastCheckFile = Date.now();
-  const puterFile = await puter.fs.stat("Frogtab_sync.json");
-  localStorage.setItem("timestamp", JSON.stringify(puterFile.modified));
+  if (puter.auth.isSignedIn()) {
+    if (localStorage.getItem("puter.auth.token") === null) {
+      window.location.reload();
+    }
+    await puter.fs.write("Frogtab_sync.json", dataBlob);
+    lastCheckFile = Date.now();
+    const puterFile = await puter.fs.stat("Frogtab_sync.json");
+    localStorage.setItem("timestamp", JSON.stringify(puterFile.modified));
+  }
   if (fileHandle !== null) {
     try {
       const stream = await fileHandle.createWritable();
@@ -744,7 +749,9 @@ async function startApp() {
   });
   window.setInterval(async () => {
     if (isNewDay()) {
-      await checkFileAndLoad();
+      if (puter.auth.isSignedIn()) {
+        await checkFileAndLoad();
+      }
       updateValues();
       setNotifyStatus();
       if (notifyInbox) {
@@ -755,7 +762,7 @@ async function startApp() {
       }
       refreshInfo();
     }
-    else if (lastCheckFile <= Date.now() - 60000) {
+    else if (lastCheckFile <= Date.now() - 60000 && puter.auth.isSignedIn()) {
       await checkFileAndLoad();
       setNotifyStatus();
       refreshView();

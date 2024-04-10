@@ -6,7 +6,7 @@ To get started:
 
  2. At the top-right of Puter, click ⚠️ (Save Account).
 
- 3. Enter a username, your email and a password, then click **Create Account**.
+ 3. Choose a username, enter your email, set a password, then click **Create Account**.
 
  4. Open Frogtab at [dwilding.github.io/frogtab-puter/](https://dwilding.github.io/frogtab-puter/).
 

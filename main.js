@@ -584,7 +584,7 @@ async function saveToFile() {
     type: "application/json; charset=utf-8"
   });
   await puter.fs.write("Frogtab_sync.json", dataBlob);
-  lastAppend = Date.now();
+  lastCheckFile = Date.now();
   const puterFile = await puter.fs.stat("Frogtab_sync.json");
   localStorage.setItem("timestamp", JSON.stringify(puterFile.modified));
   if (fileHandle !== null) {
@@ -601,7 +601,7 @@ async function saveToFile() {
   timeoutSave.waiting = false;
 }
 async function checkFileAndLoad() {
-  lastAppend = Date.now();
+  lastCheckFile = Date.now();
   const puterFile = await puter.fs.stat("Frogtab_sync.json");
   if (getTimestamp() < puterFile.modified) {
     const dataBlob = await puter.fs.read("Frogtab_sync.json");

@@ -574,8 +574,9 @@ function storeThenSave(key, value) {
   requestSave();
 }
 function requestSave() {
-  window.clearTimeout(timeoutSave);
-  timeoutSave = window.setTimeout(saveToFile, 3000);
+  window.clearTimeout(timeoutSave.id);
+  timeoutSave.id = window.setTimeout(saveToFile, 3000);
+  timeoutSave.waiting = true;
 }
 async function saveToFile() {
   const dataJSON = createDataJSON();
@@ -597,6 +598,7 @@ async function saveToFile() {
       dom.enableSave.classList.add("display");
     }
   }
+  timeoutSave.waiting = false;
 }
 async function checkFileAndLoad() {
   lastAppend = Date.now();
@@ -619,33 +621,6 @@ async function checkFileAndLoad() {
 function getTimestamp() {
   return JSON.parse(localStorage.getItem("timestamp"));
 }
-async function setLocation() {
-  if (requestedIcon === null || requestedReload === null || !document.hidden) {
-    return;
-  }
-  const params = new URLSearchParams(window.location.search);
-  params.set("reload", selectedTab);
-  const newQueryString = params.toString();  
-  let newIcon = "normal";
-  if (notifyInbox) {
-    newIcon = "notify";
-  }
-  if (newIcon != requestedIcon && localStorage.getItem("restore") === null) {
-    const newLocation = `/icon-${newIcon}?${newQueryString}`;
-    try {
-      // Before committing to the reload, verify that we can load the new location
-      await fetch(newLocation);
-      window.location.href = newLocation;
-      return;
-    }
-    catch (err) {
-      // If we couldn't load the new location, fall though to replaceState
-    }
-  }
-  if (selectedTab != requestedReload) {
-    history.replaceState(null, "", `/icon-${requestedIcon}?${newQueryString}`);
-  }
-}
 async function startApp() {
   setAchievements();
   setSnap();
@@ -666,7 +641,7 @@ async function startApp() {
     await storeIcons();
   }
   setNotifyStatus();
-  if (requestedReload == "inbox" || (requestedReload === null && notifyInbox)) {
+  if (startingTab == "inbox" || (startingTab === null && notifyInbox)) {
     switchToTab("inbox");
     refreshInfo();
   }
@@ -725,6 +700,11 @@ async function startApp() {
   document.addEventListener("click", event => {
     dom.menu.classList.remove("display");
   });
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+      lastActive = Date.now();
+    }
+  });
   document.body.addEventListener("keydown", event => {
     if ((event.ctrlKey || event.metaKey) && !event.shiftKey && event.key.toLowerCase() == "enter") {
       event.preventDefault();
@@ -780,7 +760,29 @@ async function startApp() {
       setNotifyStatus();
       refreshView();
     }
-    await setLocation();
+    if (
+      document.hidden && lastActive <= Date.now() - 30000
+      && requestedIcon !== null && requestedReload !== null
+      && !timeoutSave.waiting
+      && localStorage.getItem("restore") === null
+    ) {
+      let reloadIcon = "normal";
+      if (notifyInbox) {
+        reloadIcon = "notify";
+      }
+      if (reloadIcon != requestedIcon) {
+        const reloadParams = new URLSearchParams(window.location.search);
+        reloadParams.set("reload", Date.now().toString());
+        const reloadLocation = `icon-${reloadIcon}?${reloadParams.toString()}`;
+        try {
+          // Before committing to the reload, verify that we can load the new location
+          await fetch(reloadLocation);
+          localStorage.setItem("tab", selectedTab);
+          window.location.href = reloadLocation;
+        }
+        catch {}
+      }
+    }
   }, 15000);
   window.addEventListener("storage", async event => {
     setAchievements();
@@ -836,6 +838,8 @@ if (localStorage.getItem("ui.theme") === null) {
 document.documentElement.setAttribute("data-theme", localStorage.getItem("ui.theme"));
 const requestedIcon = document.documentElement.getAttribute("data-icon");
 const requestedReload = (new URLSearchParams(window.location.search)).get('reload');
+const startingTab = localStorage.getItem("tab");
+localStorage.removeItem("tab");
 const dom = {
   container: document.getElementById("container"),
   icon16: document.getElementById("icon16"),
@@ -859,7 +863,11 @@ const storedIcons = {};
 let notifyInbox = false;
 let selectedTab = "today";
 let fileHandle = null;
-let timeoutSave;
+let timeoutSave = {
+  id: 0,
+  waiting: false
+};
 let timeoutShowInfo;
+let lastActive = Date.now();
 let lastCheckFile = 0;
 startApp();

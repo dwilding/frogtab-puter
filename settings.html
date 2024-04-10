@@ -67,10 +67,11 @@
           dom.puterStatus.textContent = "You have not logged in to Puter. To log in, reload Frogtab.";
         }
         window.addEventListener("storage", event => {
+          document.documentElement.setAttribute("data-theme", localStorage.getItem("ui.theme"));
           if (!puter.auth.isSignedIn() && localStorage.getItem("puter.auth.token") !== null) {
             window.location.reload();
+            return;
           }
-          document.documentElement.setAttribute("data-theme", localStorage.getItem("ui.theme"));
         });
       }
 

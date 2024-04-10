@@ -586,6 +586,7 @@ async function saveToFile() {
   if (puter.auth.isSignedIn()) {
     if (localStorage.getItem("puter.auth.token") === null) {
       window.location.reload();
+      return;
     }
     await puter.fs.write("Frogtab_sync.json", dataBlob);
     lastCheckFile = Date.now();
